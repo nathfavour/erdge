@@ -26,15 +26,6 @@ func combineFiles(inputDir, outputFilePath string) error {
         return err
     }
 
-        // Create the output directory if it doesn't exist
-        outputDir := filepath.Dir(outputFilePath)
-        if _, err := os.Stat(outputDir); os.IsNotExist(err) {
-            err = os.MkdirAll(outputDir, 0755)
-            if err != nil {
-                return err
-            }
-        }
-
     outputFile, err := os.Create(outputFilePath)
     if err != nil {
         return err
@@ -158,6 +149,67 @@ func processPath(path string, n, m int) error {
 	})
 }
 
+// func main() {
+// 	nPtr := flag.Int("n", 0, "Number of lines to remove from the start of the file")
+// 	mPtr := flag.Int("m", 0, "Number of lines to remove from the end of the file")
+// 	linesPerFilePtr := flag.Int("x", 10, "Number of lines per file")
+// 	outputPtr := flag.String("p", "", "Path of the output file")
+
+
+// 	flag.Parse()
+// 	// filePath := flag.Arg(0)
+// 	// inputDir := flag.Arg(0)
+
+// 	// if *outputPtr == "" {
+//     //     fmt.Print("Enter the desired pathname of the final combined file: ")
+//     //     fmt.Scanln(outputPtr)
+
+//     //     if *outputPtr == "" {
+//     //         *outputPtr = fmt.Sprintf("combined_%d.txt", rand.Int())
+//     //         fmt.Println("No name provided. The output file will be named:", *outputPtr)
+//     //     }
+//     // }
+
+//     // err := combineFiles(inputDir, *outputPtr)
+//     // if err != nil {
+//     //     fmt.Println("Error combining files:", err)
+//     // } else {
+//     //     fmt.Println("Files combined successfully into:", *outputPtr)
+//     // }
+
+
+
+// 	args := flag.Args()
+// 	path := "input"
+
+// 	//     if len(args) != 1 {
+// 	//         panic("Please specify a file or directory path")
+// 	//     }
+
+// 	//     if err := processPath(args[0], *nPtr, *mPtr); err != nil {
+// 	//         panic(err)
+// 	//     }
+// 	// }
+
+// 	if len(args) > 0 {
+// 		path = args[0]
+// 	}
+
+// 	if err := processPath(path, *nPtr, *mPtr); err != nil {
+// 		panic(err)
+// 	}
+
+
+// 	// err := splitFiles(filePath, *linesPerFilePtr)
+//     // if err != nil {
+//     //     fmt.Println("Error splitting file:", err)
+//     // } else {
+//     //     fmt.Println("File split successfully")
+//     // }
+
+
+// }
+
 
 func main() {
     nPtr := flag.Int("n", 0, "Number of lines to remove from the start of the file")
@@ -183,33 +235,59 @@ func main() {
         if err := processPath(path, *nPtr, *mPtr); err != nil {
             panic(err)
         }
+	}
+    // }else if *linesPerFilePtr > 0 {
+    //     // Perform splitFiles workflow
+    //     err := splitFiles(path, *linesPerFilePtr)
+    //     if err != nil {
+    //         fmt.Println("Error splitting file:", err)
+    //     } else {
+    //         fmt.Println("File split successfully")
+    //     }
+    // } else {
+    //     // Perform  combineFiles workflow
+    //     if *outputPtr == "" {
+    //         fmt.Print("Enter the desired pathname of the final combined file: ")
+    //         fmt.Scanln(outputPtr)
 
+    //         if *outputPtr == "" {
+    //             *outputPtr = fmt.Sprintf("combined_%d.txt", rand.Int())
+    //             fmt.Println("No name provided. The output file will be named:", *outputPtr)
+    //         }
+    //     }
 
-        } else if fileInfo.IsDir() {
-            // Perform combineFiles workflow
+    //     err := combineFiles(path, *outputPtr)
+    //     if err != nil {
+    //         fmt.Println("Error combining files:", err)
+    //     } else {
+    //         fmt.Println("Files combined successfully into:", *outputPtr)
+    //     }
+    // }
+	else if fileInfo.IsDir() {
+        // Perform combineFiles workflow
+        if *outputPtr == "" {
+            fmt.Print("Enter the desired pathname of the final combined file: ")
+            fmt.Scanln(outputPtr)
+
             if *outputPtr == "" {
-                fmt.Print("Enter the desired pathname of the final combined file: ")
-                fmt.Scanln(outputPtr)
-    
-                if *outputPtr == "" {
-                    *outputPtr = fmt.Sprintf("combined_%d.txt", rand.Int())
-                    fmt.Println("No name provided. The output file will be named:", *outputPtr)
-                }
-            }
-    
-            err := combineFiles(path, *outputPtr)
-            if err != nil {
-                fmt.Println("Error combining files:", err)
-            } else {
-                fmt.Println("Files combined successfully into:", *outputPtr)
-            }
-        } else {
-            // Perform splitFiles workflow
-            err := splitFiles(path, *linesPerFilePtr)
-            if err != nil {
-                fmt.Println("Error splitting file:", err)
-            } else {
-                fmt.Println("File split successfully")
+                *outputPtr = fmt.Sprintf("combined_%d.txt", rand.Int())
+                fmt.Println("No name provided. The output file will be named:", *outputPtr)
             }
         }
+
+        err := combineFiles(path, *outputPtr)
+        if err != nil {
+            fmt.Println("Error combining files:", err)
+        } else {
+            fmt.Println("Files combined successfully into:", *outputPtr)
+        }
+    } else {
+        // Perform splitFiles workflow
+        err := splitFiles(path, *linesPerFilePtr)
+        if err != nil {
+            fmt.Println("Error splitting file:", err)
+        } else {
+            fmt.Println("File split successfully")
+        }
     }
+}
