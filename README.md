@@ -87,6 +87,6 @@ Replace <num_start> with the number of lines you want to remove from the start o
 If no path is specified, ERDGE will use the "input" folder in the current working directory.
 
 ## Contributing
-Contributions are welcome! Please feel free to submit a pull request.
+Contributions are welcome! Please feel free to submit a pull request. Thanks.
 
 ## License
