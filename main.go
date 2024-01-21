@@ -114,75 +114,42 @@ func writeLinesToFile(lines []string, filePath string) error {
 }
 
 
+func removeLines(filePath string, n, m int) error {
+	file, err := os.Open(filePath)
+	if err != nil {
+		return err
+	}
+	defer file.Close()
 
+	scanner := bufio.NewScanner(file)
+	var lines []string
+	for scanner.Scan() {
+		lines = append(lines, scanner.Text())
+	}
 
-func removeLines(filePath string, n, m, q, r int, s, t []string) error {
-    file, err := os.Open(filePath)
-    if err != nil {
-        return err
-    }
-    defer file.Close()
+	if err := scanner.Err(); err != nil {
+		return err
+	}
 
-    scanner := bufio.NewScanner(file)
-    var lines []string
-    for scanner.Scan() {
-        lines = append(lines, scanner.Text())
-    }
+	totalLines := len(lines)
+	if n+m >= totalLines {
+		n, m = totalLines, 0
+	}
 
-    if err := scanner.Err(); err != nil {
-        return err
-    }
+	lines = lines[n : totalLines-m]
+	output := strings.Join(lines, "\n")
 
-    var newLines []string
-    for i, line := range lines {
-        if (i+1)%q != 0 && (i+1)%r != 0 {
-            newLines = append(newLines, line)
-        } else if (i+1)%r == 0 {
-            if len(s) > 0 {
-                for _, str := range s {
-                    if strings.Contains(line, str) {
-                        newLines = append(newLines, line)
-                        break
-                    }
-                }
-            }
-            if len(t) > 0 {
-                for _, str := range t {
-                    if !strings.Contains(line, str) {
-                        newLines = append(newLines, line)
-                        break
-                    }
-                }
-            }
-        }
-    }
-
-    // Remove the first n lines and the last m lines
-    if n > 0 {
-        newLines = newLines[n:]
-    }
-    if m > 0 {
-        newLines = newLines[:len(newLines)-m]
-    }
-
-    output := strings.Join(newLines, "\n")
-    return ioutil.WriteFile(filePath, []byte(output), 0644)
+	return ioutil.WriteFile(filePath, []byte(output), 0644)
 }
 
-
-
-
-
-// func processPath(path string, n, m int) error {
-func processPath(path string, n, m, p, q int, r, s []string) error {
-
+func processPath(path string, n, m int) error {
 	return filepath.Walk(path, func(filePath string, info os.FileInfo, err error) error {
 		if err != nil {
 			return err
 		}
 
 		if !info.IsDir() {
-			if err := removeLines(filePath, n, m, p, q, r, s); err != nil {
+			if err := removeLines(filePath, n, m); err != nil {
 				return err
 			}
 		}
@@ -192,28 +159,13 @@ func processPath(path string, n, m, p, q int, r, s []string) error {
 }
 
 
-
-
 func main() {
     nPtr := flag.Int("n", 0, "Number of lines to remove from the start of the file")
     mPtr := flag.Int("m", 0, "Number of lines to remove from the end of the file")
-    qPtr := flag.Int("q", 0, "Line number to be deleted")
-    rPtr := flag.Int("r", 0, "Line number to be deleted relative to -q")
-    sPtr := flag.String("s", "", "Lines containing these strings will be deleted")
-    tPtr := flag.String("t", "", "Lines not containing these strings will be deleted")
     linesPerFilePtr := flag.Int("x", 10, "Number of lines per file")
     outputPtr := flag.String("p", "", "Path of the output file")
-    hPtr := flag.Bool("h", false, "Print help message")
 
     flag.Parse()
-
-    if *hPtr {
-        flag.Usage()
-        os.Exit(0)
-    }
-
-    s := strings.Split(*sPtr, ",")
-    t := strings.Split(*tPtr, ",")
 
     args := flag.Args()
     if len(args) < 1 {
@@ -221,60 +173,43 @@ func main() {
     }
     path := args[0]
 
-    fileInfo, err := os.Stat(path)
+	fileInfo, err := os.Stat(path)
     if err != nil {
         panic(err)
     }
 
-    if *nPtr > 0 || *mPtr > 0 || *qPtr > 0 || *rPtr > 0 || *sPtr != "" || *tPtr != "" {
-        // Perform removeLines workflow
-        if err := removeLines(path, *nPtr, *mPtr, *qPtr, *rPtr, s, t); err != nil {
+    if *nPtr > 0 || *mPtr > 0 {
+        // Perform processPath workflow
+        if err := processPath(path, *nPtr, *mPtr); err != nil {
             panic(err)
         }
 
 
-
-
-
-        // if fileInfo.IsDir() {
-        //     // Perform removeLines workflow on each file in the directory
-        //     if err := processPath(path, *nPtr, *mPtr, *qPtr, *rPtr, s, t); err != nil {
-        //         panic(err)
-        //     }
-        // } else if *nPtr > 0 || *mPtr > 0 || *qPtr > 0 || *rPtr > 0 || *sPtr != "" || *tPtr != "" {
-        //     // Perform removeLines workflow on the single file
-        //     if err := removeLines(path, *nPtr, *mPtr, *qPtr, *rPtr, s, t); err != nil {
-        //         panic(err)
-        //     }
-        // }
-
-
-
-    } else if fileInfo.IsDir() {
-        // Perform combineFiles workflow
-        if *outputPtr == "" {
-            fmt.Print("Enter the desired pathname of the final combined file: ")
-            fmt.Scanln(outputPtr)
-
+        } else if fileInfo.IsDir() {
+            // Perform combineFiles workflow
             if *outputPtr == "" {
-                *outputPtr = fmt.Sprintf("combined_%d.txt", rand.Int())
-                fmt.Println("No name provided. The output file will be named:", *outputPtr)
+                fmt.Print("Enter the desired pathname of the final combined file: ")
+                fmt.Scanln(outputPtr)
+    
+                if *outputPtr == "" {
+                    *outputPtr = fmt.Sprintf("combined_%d.txt", rand.Int())
+                    fmt.Println("No name provided. The output file will be named:", *outputPtr)
+                }
+            }
+    
+            err := combineFiles(path, *outputPtr)
+            if err != nil {
+                fmt.Println("Error combining files:", err)
+            } else {
+                fmt.Println("Files combined successfully into:", *outputPtr)
+            }
+        } else {
+            // Perform splitFiles workflow
+            err := splitFiles(path, *linesPerFilePtr)
+            if err != nil {
+                fmt.Println("Error splitting file:", err)
+            } else {
+                fmt.Println("File split successfully")
             }
         }
-
-        err := combineFiles(path, *outputPtr)
-        if err != nil {
-            fmt.Println("Error combining files:", err)
-        } else {
-            fmt.Println("Files combined successfully into:", *outputPtr)
-        }
-    } else {
-        // Perform splitFiles workflow
-        err := splitFiles(path, *linesPerFilePtr)
-        if err != nil {
-            fmt.Println("Error splitting file:", err)
-        } else {
-            fmt.Println("File split successfully")
-        }
     }
-}
